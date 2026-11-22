@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="dark" />
+    <link rel="icon" href="data:," />
+    <title>Prueba Supabase</title>
+    <style>
+      :root {
+        --bg: #0d1117;
+        --panel: #161d27;
+        --panel-2: #1c2634;
+        --line: #2c3a4d;
+        --text: #f2f6fb;
+        --muted: #a9b8c9;
+        --green: #2fd67a;
+        --green-bg: #0f2e1e;
+        --red: #ff5d5d;
+        --red-bg: #331417;
+        --amber: #ffc857;
+        --amber-bg: #33270d;
+      }
+      * { box-sizing: border-box; }
+      html, body { margin: 0; padding: 0; }
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        line-height: 1.45;
+        -webkit-text-size-adjust: 100%;
+      }
+      main {
+        max-width: 640px;
+        margin: 0 auto;
+        padding: 20px 16px 48px;
+      }
+      h1 {
+        font-size: 1.55rem;
+        margin: 4px 0 6px;
+        letter-spacing: -0.01em;
+      }
+      .sub {
+        color: var(--muted);
+        font-size: 1.05rem;
+        margin: 0 0 20px;
+      }
+      /* Big verdict banner */
+      .verdict {
+        border-radius: 16px;
+        padding: 26px 20px;
+        text-align: center;
+        margin-bottom: 22px;
+        border: 2px solid var(--line);
+        background: var(--panel);
+      }
+      .verdict .big {
+        font-size: 2.1rem;
+        font-weight: 800;
+        line-height: 1.2;
+        margin: 0;
+        overflow-wrap: break-word;
+      }
+      .verdict .detail {
+        font-size: 1.1rem;
+        margin: 10px 0 0;
+        color: var(--muted);
+      }
+      .verdict.ok { background: var(--green-bg); border-color: var(--green); }
+      .verdict.ok .big { color: var(--green); }
+      .verdict.ok .detail { color: #c9f2da; }
+      .verdict.fail { background: var(--red-bg); border-color: var(--red); }
+      .verdict.fail .big { color: var(--red); font-size: 1.5rem; }
+      .verdict.fail .detail { color: #ffd2d2; font-size: 1rem; overflow-wrap: anywhere; }
+      .verdict.wait .big { color: var(--amber); font-size: 1.7rem; }
+      .spinner {
+        width: 44px; height: 44px;
+        margin: 0 auto 14px;
+        border-radius: 50%;
+        border: 5px solid var(--line);
+        border-top-color: var(--amber);
+        animation: spin 0.9s linear infinite;
+      }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      @media (prefers-reduced-motion: reduce) {
+        .spinner { animation: none; }
+      }
+      section {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 18px;
+        margin-bottom: 18px;
+      }
+      section h2 {
+        font-size: 1.3rem;
+        margin: 0 0 4px;
+      }
+      .count {
+        color: var(--muted);
+        font-size: 1.05rem;
+        margin: 0 0 12px;
+      }
+      .count strong { color: var(--text); font-size: 1.25rem; }
+      .status-line {
+        font-size: 1.05rem;
+        font-weight: 700;
+        margin: 0 0 10px;
+      }
+      .status-line.ok { color: var(--green); }
+      .status-line.fail { color: var(--red); overflow-wrap: anywhere; }
+      .status-line.wait { color: var(--amber); }
+      ul.products { list-style: none; margin: 0; padding: 0; }
+      ul.products li {
+        background: var(--panel-2);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 14px 16px;
+        margin-bottom: 10px;
+      }
+      ul.products li:last-child { margin-bottom: 0; }
+      .p-name { font-size: 1.35rem; font-weight: 800; margin: 0; overflow-wrap: break-word; }
+      .p-biz { font-size: 1.05rem; color: var(--muted); margin: 2px 0 0; overflow-wrap: break-word; }
+      .p-price { font-size: 1.5rem; font-weight: 800; color: var(--green); margin: 6px 0 0; }
+      .empty-note { font-size: 1.1rem; color: var(--amber); margin: 0; }
+      ul.files { list-style: none; margin: 0; padding: 0; }
+      ul.files li {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 8px 0;
+        border-bottom: 1px solid var(--line);
+        font-size: 1.1rem;
+        overflow-wrap: anywhere;
+      }
+      ul.files li:last-child { border-bottom: none; }
+      ul.files img {
+        width: 56px; height: 56px;
+        object-fit: cover;
+        border-radius: 8px;
+        background: var(--panel-2);
+        flex: none;
+      }
+      button.retry {
+        width: 100%;
+        min-height: 56px;
+        font-size: 1.2rem;
+        font-weight: 800;
+        color: #08130c;
+        background: var(--green);
+        border: none;
+        border-radius: 14px;
+        cursor: pointer;
+        margin-top: 4px;
+      }
+      button.retry:active { filter: brightness(0.9); }
+      .when {
+        text-align: center;
+        color: var(--muted);
+        font-size: 0.95rem;
+        margin: 14px 0 0;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Prueba de Supabase</h1>
+      <p class="sub">Esta página lee la tabla <strong>productos</strong> y el bucket <strong>fotos</strong> del proyecto «Vitrina de prueba». Si los datos cargan con el VPN apagado, Supabase funciona desde Cuba sin VPN.</p>
+
+      <div class="verdict wait" id="verdict" role="status">
+        <div class="spinner" id="spinner"></div>
+        <p class="big" id="verdictBig">Comprobando…</p>
+        <p class="detail" id="verdictDetail">Conectando con Supabase, espera unos segundos.</p>
+      </div>
+
+      <section aria-labelledby="h-productos">
+        <h2 id="h-productos">Productos</h2>
+        <p class="status-line wait" id="prodStatus">Leyendo la tabla «productos»…</p>
+        <p class="count" id="prodCount" hidden></p>
+        <div id="prodBody"></div>
+      </section>
+
+      <section aria-labelledby="h-fotos">
+        <h2 id="h-fotos">Fotos</h2>
+        <p class="status-line wait" id="fotoStatus">Revisando el bucket «fotos»…</p>
+        <p class="count" id="fotoCount" hidden></p>
+        <div id="fotoBody"></div>
+      </section>
+
+      <button class="retry" id="retryBtn" type="button">Volver a comprobar</button>
+      <p class="when" id="when"></p>
+    </main>
+
+    <script>
+      var BASE = "https://klziezlbckaibcskvdko.supabase.co";
+      var KEY = "sb_publishable_m4UuJW4VUr4u2PQS0t2Yaw_wfK-qYZi";
+      var HEADERS = {
+        "apikey": KEY,
+        "Authorization": "Bearer " + KEY,
+        "Content-Type": "application/json"
+      };
+
+      var verdict = document.getElementById("verdict");
+      var verdictBig = document.getElementById("verdictBig");
+      var verdictDetail = document.getElementById("verdictDetail");
+      var spinner = document.getElementById("spinner");
+      var prodStatus = document.getElementById("prodStatus");
+      var prodCount = document.getElementById("prodCount");
+      var prodBody = document.getElementById("prodBody");
+      var fotoStatus = document.getElementById("fotoStatus");
+      var fotoCount = document.getElementById("fotoCount");
+      var fotoBody = document.getElementById("fotoBody");
+      var when = document.getElementById("when");
+
+      function fmtPrice(n) {
+        if (n === null || n === undefined || n === "") return "Sin precio";
+        var num = Number(n);
+        if (isNaN(num)) return String(n) + " CUP";
+        return num.toLocaleString("es-CU") + " CUP";
+      }
+
+      function errText(err) {
+        if (!err) return "Error desconocido";
+        if (err.message) return err.message;
+        return String(err);
+      }
+
+      function fetchJSON(url, options) {
+        return fetch(url, options).then(function (res) {
+          return res.text().then(function (txt) {
+            var data = null;
+            try { data = txt ? JSON.parse(txt) : null; } catch (e) { data = null; }
+            if (!res.ok) {
+              var msg = "HTTP " + res.status;
+              if (data && (data.message || data.error)) msg += " — " + (data.message || data.error);
+              else if (txt) msg += " — " + txt.slice(0, 200);
+              throw new Error(msg);
+            }
+            return data;
+          });
+        });
+      }
+
+      function loadProducts() {
+        return fetchJSON(BASE + "/rest/v1/productos?select=*", {
+          method: "GET",
+          headers: HEADERS
+        }).then(function (rows) {
+          if (!Array.isArray(rows)) throw new Error("La tabla respondió algo inesperado.");
+          prodStatus.className = "status-line ok";
+          prodStatus.textContent = "✔ La tabla respondió bien.";
+          prodCount.hidden = false;
+          prodCount.innerHTML = "Productos leídos: <strong>" + rows.length + "</strong>";
+          prodBody.innerHTML = "";
+          if (rows.length === 0) {
+            var p = document.createElement("p");
+            p.className = "empty-note";
+            p.textContent = "La tabla está vacía por ahora: todavía no hay productos guardados. La conexión sí funcionó.";
+            prodBody.appendChild(p);
+            return { ok: true, count: 0 };
+          }
+          var ul = document.createElement("ul");
+          ul.className = "products";
+          rows.forEach(function (r) {
+            var li = document.createElement("li");
+            var name = document.createElement("p");
+            name.className = "p-name";
+            name.textContent = r.nombre != null ? String(r.nombre) : "(sin nombre)";
+            var biz = document.createElement("p");
+            biz.className = "p-biz";
+            biz.textContent = "Negocio: " + (r.negocio != null ? String(r.negocio) : "—");
+            var price = document.createElement("p");
+            price.className = "p-price";
+            price.textContent = fmtPrice(r.precio);
+            li.appendChild(name);
+            li.appendChild(biz);
+            li.appendChild(price);
+            ul.appendChild(li);
+          });
+          prodBody.appendChild(ul);
+          return { ok: true, count: rows.length };
+        }).catch(function (err) {
+          prodStatus.className = "status-line fail";
+          prodStatus.textContent = "✘ Error al leer los productos: " + errText(err);
+          prodCount.hidden = true;
+          prodBody.innerHTML = "";
+          return { ok: false, error: errText(err) };
+        });
+      }
+
+      function loadFiles() {
+        return fetchJSON(BASE + "/storage/v1/object/list/fotos", {
+          method: "POST",
+          headers: HEADERS,
+          body: JSON.stringify({ prefix: "" })
+        }).then(function (files) {
+          if (!Array.isArray(files)) throw new Error("El bucket respondió algo inesperado.");
+          var real = files.filter(function (f) { return f && f.name && f.id !== null; });
+          fotoStatus.className = "status-line ok";
+          fotoStatus.textContent = "✔ El bucket respondió bien.";
+          fotoCount.hidden = false;
+          fotoCount.innerHTML = "Archivos en el bucket «fotos»: <strong>" + real.length + "</strong>";
+          fotoBody.innerHTML = "";
+          if (real.length === 0) {
+            var p = document.createElement("p");
+            p.className = "empty-note";
+            p.textContent = "El bucket está vacío por ahora: todavía no hay fotos subidas. La conexión sí funcionó.";
+            fotoBody.appendChild(p);
+            return { ok: true, count: 0 };
+          }
+          var ul = document.createElement("ul");
+          ul.className = "files";
+          real.forEach(function (f) {
+            var li = document.createElement("li");
+            var img = document.createElement("img");
+            img.alt = "";
+            img.loading = "lazy";
+            img.src = BASE + "/storage/v1/object/public/fotos/" + encodeURIComponent(f.name);
+            img.onerror = function () { img.style.display = "none"; };
+            var span = document.createElement("span");
+            span.textContent = f.name;
+            li.appendChild(img);
+            li.appendChild(span);
+            ul.appendChild(li);
+          });
+          fotoBody.appendChild(ul);
+          return { ok: true, count: real.length };
+        }).catch(function (err) {
+          fotoStatus.className = "status-line fail";
+          fotoStatus.textContent = "✘ Error al listar las fotos: " + errText(err);
+          fotoCount.hidden = true;
+          fotoBody.innerHTML = "";
+          return { ok: false, error: errText(err) };
+        });
+      }
+
+      function run() {
+        verdict.className = "verdict wait";
+        spinner.style.display = "block";
+        verdictBig.textContent = "Comprobando…";
+        verdictDetail.textContent = "Conectando con Supabase, espera unos segundos.";
+        prodStatus.className = "status-line wait";
+        prodStatus.textContent = "Leyendo la tabla «productos»…";
+        prodCount.hidden = true;
+        prodBody.innerHTML = "";
+        fotoStatus.className = "status-line wait";
+        fotoStatus.textContent = "Revisando el bucket «fotos»…";
+        fotoCount.hidden = true;
+        fotoBody.innerHTML = "";
+
+        Promise.all([loadProducts(), loadFiles()]).then(function (results) {
+          spinner.style.display = "none";
+          var prod = results[0], foto = results[1];
+          if (prod.ok && foto.ok) {
+            verdict.className = "verdict ok";
+            verdictBig.textContent = "¡SÍ FUNCIONA SIN VPN!";
+            verdictDetail.textContent = "Se leyeron " + prod.count + " producto(s) y " + foto.count + " archivo(s) de fotos directamente desde Supabase.";
+          } else if (prod.ok || foto.ok) {
+            verdict.className = "verdict fail";
+            verdictBig.textContent = "Funcionó a medias";
+            verdictDetail.textContent = !prod.ok
+              ? "Las fotos cargaron, pero los productos fallaron: " + prod.error
+              : "Los productos cargaron, pero las fotos fallaron: " + foto.error;
+          } else {
+            verdict.className = "verdict fail";
+            verdictBig.textContent = "NO FUNCIONÓ";
+            verdictDetail.textContent = "Error: " + (prod.error || foto.error);
+          }
+          var now = new Date();
+          when.textContent = "Última comprobación: " + now.toLocaleString("es-CU");
+        });
+      }
+
+      document.getElementById("retryBtn").addEventListener("click", run);
+      run();
+    </script>
+  </body>
+</html>
