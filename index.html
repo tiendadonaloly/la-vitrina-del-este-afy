@@ -405,7 +405,7 @@ footer .credit strong{color:var(--sun)}
   <!-- PLANES -->
   <section aria-labelledby="planTitle" id="planes">
     <span class="kicker">Planes para negocios</span>
-    <div class="sec-head"><div><h2 id="planTitle">Pon tu negocio en la vitrina. <span class="hl">La primera semana es gratis.</span></h2><p>Elige cómo pagar: mes a mes, o por adelantado con descuento. Todos los precios ya llevan una <strong>rebaja del 10%</strong> para que arrancar te cueste menos. Todos los planes incluyen tu tarjeta en la vitrina con tu WhatsApp directo, para que el cliente te escriba sin intermediarios.</p></div></div>
+    <div class="sec-head"><div><h2 id="planTitle">Pon tu negocio en la vitrina. <span class="hl">La primera semana es gratis.</span></h2><p>Elige cómo pagar: mes a mes, o por adelantado con descuento, y abona como te quede mejor: <strong>en efectivo o por Zelle</strong>. Todos los precios ya llevan una <strong>rebaja del 10%</strong> para que arrancar te cueste menos. Todos los planes incluyen tu tarjeta en la vitrina con tu WhatsApp directo, para que el cliente te escriba sin intermediarios.</p></div></div>
     <div class="period-switch" id="periodSwitch" role="group" aria-label="Periodo de pago">
       <button type="button" data-period="mensual">Mensual</button>
       <button type="button" data-period="tres" class="on">3 meses</button>
@@ -413,7 +413,7 @@ footer .credit strong{color:var(--sun)}
       <button type="button" data-period="anual">Anual</button>
     </div>
     <div class="plan-grid" id="planGrid"></div>
-    <p class="plans-note">Precios en CUP para residentes en Cuba. La semana gratis y los precios dependen de las condiciones vigentes al momento del registro: Armando te confirma todo por WhatsApp antes de pagar, sin letra pequeña escondida.</p>
+    <p class="plans-note">Precios en CUP para residentes en Cuba. El plan se paga <strong>en efectivo o por Zelle</strong>: no hay pago con tarjeta ni cobros automáticos. La semana gratis y los precios dependen de las condiciones vigentes al momento del registro: Armando te confirma todo por WhatsApp antes de pagar, sin letra pequeña escondida.</p>
   </section>
 
   <!-- REGISTRO -->
@@ -513,6 +513,12 @@ footer .credit strong{color:var(--sun)}
             <option value="pro" selected>PRO — el favorito</option>
             <option value="empresa">Empresa — todo incluido</option>
             <option value="sin-decidir">Todavía no sé — que Armando me aconseje</option>
+          </select>
+          <label for="rPay">Forma de pago</label>
+          <select id="rPay">
+            <option value="efectivo" selected>💵 En efectivo</option>
+            <option value="zelle">📱 Por Zelle</option>
+            <option value="sin-decidir">Todavía no sé — lo decido con Armando</option>
           </select>
           <div class="btnrow"><button type="submit" class="btn btn-wa" style="flex:1">💬 Registrar mi negocio por WhatsApp</button></div>
           <p style="color:var(--ink2);font-weight:600;font-size:.86rem;line-height:1.55;margin:12px 0 0">Sin contraseñas ni cuentas raras: tu registro le llega directo a Armando por WhatsApp y él te responde en persona.</p>
@@ -853,6 +859,8 @@ document.getElementById("regForm").addEventListener("submit",function(e){
   function v(id){ return document.getElementById(id).value.trim(); }
   var planSel=document.getElementById("rPlan");
   var planTxt=planSel.options[planSel.selectedIndex].text+" · periodo: "+PERIODS[curPeriod].label;
+  var paySel=document.getElementById("rPay");
+  var payTxt=paySel.options[paySel.selectedIndex].text.replace(/^[^A-Za-zÁÉÍÓÚÑ]+/,"");
   var msg="Hola Armando, quiero registrar mi negocio en La Vitrina del Este AFY.\n\n"+
     "Negocio: "+v("rName")+
     "\nTipo de negocio: "+v("rType")+
@@ -861,7 +869,8 @@ document.getElementById("regForm").addEventListener("submit",function(e){
     "\nPaís: "+v("rCountry")+
     "\nProvincia: "+v("rProv")+
     "\nMunicipio: "+v("rMun")+
-    "\nPlan: "+planTxt;
+    "\nPlan: "+planTxt+
+    "\nForma de pago: "+payTxt;
   window.open("https://wa.me/5352783094?text="+encodeURIComponent(msg),"_blank");
   toast("Abriendo tu WhatsApp con el registro listo 💬");
 });
