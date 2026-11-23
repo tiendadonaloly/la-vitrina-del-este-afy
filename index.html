@@ -412,7 +412,7 @@ footer .credit strong{color:var(--sun)}
 <div class="topband">
   <a class="band-panel rates-panel" href="https://eltoque.com" target="_blank" rel="noopener" data-sound="click" aria-label="Ver las tasas de El Toque">
     <span class="b-ic" aria-hidden="true">💱</span>
-    <span class="b-main"><b>Tasas de El Toque hoy</b><span class="b-big">USD 960 · EUR 1.030 · MLC 841 CUP</span><small>22 de noviembre de 2026 · 1:29 p.m. — Toca para ver más</small></span>
+    <span class="b-main"><b>Tasas de El Toque hoy</b><span class="b-big">USD 965 · EUR 1.030 · MLC 842 CUP</span><small>Tasa del 22 de noviembre de 2026 · 9:29 p. m. · Fuente: El Toque — Toca para ver más</small></span>
   </a>
   <div class="band-panel wx-panel">
     <span class="b-ic" id="wxIcon" aria-hidden="true">🌤️</span>
@@ -821,18 +821,20 @@ function matches(b){
   }
   return true;
 }
+function safeColor(c){ return /^#[0-9A-Fa-f]{6}$/.test(""+(c||"")) ? c : "#0B6B84"; }
 function bizCard(b){
   var el=document.createElement("article"); el.className="biz";
+  var col=safeColor(b.color);
   el.innerHTML=
-    '<div class="biz-top" style="background:linear-gradient(140deg,'+b.color+','+b.color+'CC 55%,#FFB81C 140%)">'+
+    '<div class="biz-top" style="background:linear-gradient(140deg,'+col+','+col+'CC 55%,#FFB81C 140%)">'+
       (b.featured?'<span class="biz-star">⭐ Destacado</span>':"")+
-      '<span class="big-ic">'+ICONS[b.icon]+'</span>'+
-      '<span class="biz-zone">📍 '+b.zone+'</span></div>'+
-    '<div class="biz-body"><h3>'+b.name+'</h3><div class="biz-cat">'+b.catName+'</div><p>'+b.desc+'</p>'+
+      '<span class="big-ic">'+(ICONS[b.icon]||"")+'</span>'+
+      '<span class="biz-zone">📍 '+esc(b.zone)+'</span></div>'+
+    '<div class="biz-body"><h3>'+esc(b.name)+'</h3><div class="biz-cat">'+esc(b.catName)+'</div><p>'+esc(b.desc)+'</p>'+
     '<div class="biz-actions">'+
       '<button class="btn btn-teal btn-detail">Ver detalles</button>'+
-      '<a class="btn btn-wa" target="_blank" rel="noopener" href="'+b.wa+'" data-sound="success" aria-label="Escribir por WhatsApp a '+b.name+'">💬</a>'+
-      '<button class="btn like-btn'+(likes[b.id]?" liked":"")+'" aria-label="Guardar '+b.name+' en favoritos" aria-pressed="'+(likes[b.id]?"true":"false")+'">'+(likes[b.id]?"♥":"♡")+'</button>'+
+      '<a class="btn btn-wa" target="_blank" rel="noopener" href="'+esc(safeUrl(b.wa)||"#")+'" data-sound="success" aria-label="Escribir por WhatsApp a '+esc(b.name)+'">💬</a>'+
+      '<button class="btn like-btn'+(likes[b.id]?" liked":"")+'" aria-label="Guardar '+esc(b.name)+' en favoritos" aria-pressed="'+(likes[b.id]?"true":"false")+'">'+(likes[b.id]?"♥":"♡")+'</button>'+
     '</div></div>';
   el.querySelector(".btn-detail").addEventListener("click",function(){ openModal(b); });
   var likeBtn=el.querySelector(".like-btn");
@@ -848,7 +850,7 @@ function bizCard(b){
 }
 function slotCard(s){
   var el=document.createElement("article"); el.className="biz slot";
-  el.innerHTML='<div class="biz-top" aria-hidden="true"></div><div class="biz-body"><h3>Tu negocio aquí</h3><div class="biz-cat">📍 '+s.zone+' · Espacio disponible</div><p>'+s.text+'</p><div class="biz-actions"><a class="btn btn-coral" target="_blank" rel="noopener" data-sound="success" href="https://wa.me/5352783094?text=Hola%20Armando%2C%20quiero%20anunciar%20mi%20negocio%20de%20'+encodeURIComponent(s.zone)+'%20en%20La%20Vitrina%20del%20Este%20AFY.">Quiero este espacio →</a></div></div>';
+  el.innerHTML='<div class="biz-top" aria-hidden="true"></div><div class="biz-body"><h3>Tu negocio aquí</h3><div class="biz-cat">📍 '+esc(s.zone)+' · Espacio disponible</div><p>'+esc(s.text)+'</p><div class="biz-actions"><a class="btn btn-coral" target="_blank" rel="noopener" data-sound="success" href="https://wa.me/5352783094?text=Hola%20Armando%2C%20quiero%20anunciar%20mi%20negocio%20de%20'+encodeURIComponent(s.zone)+'%20en%20La%20Vitrina%20del%20Este%20AFY.">Quiero este espacio →</a></div></div>';
   return el;
 }
 function render(){
@@ -915,13 +917,13 @@ function openModal(b){
         return '<div class="prod-item">'+(safeUrl(p.foto_url)?'<img src="'+esc(safeUrl(p.foto_url))+'" alt="">':'<span style="width:52px;height:52px;border-radius:11px;background:var(--bg2);display:grid;place-items:center;font-size:22px;flex:none">🛍️</span>')+'<span>'+esc(p.nombre)+'</span><span class="pr">'+fmt(Number(p.precio||0))+' CUP</span></div>';
       }).join("")+'</div>';
   }
-  modalContent.innerHTML='<h3 id="modalTitle">'+b.name+'</h3>'+
-    '<div class="biz-cat" style="color:var(--teal);font-weight:800">'+b.catName+' · 📍 '+b.zone+'</div>'+
-    '<p>'+b.desc+'</p>'+
-    '<dl>'+(b.sells?'<dt>Qué vende</dt><dd>'+b.sells+'</dd>':"")+(b.hours?'<dt>Horario</dt><dd>'+b.hours+'</dd>':"")+(b.delivery?'<dt>Entrega</dt><dd>'+b.delivery+'</dd>':"")+'</dl>'+
+  modalContent.innerHTML='<h3 id="modalTitle">'+esc(b.name)+'</h3>'+
+    '<div class="biz-cat" style="color:var(--teal);font-weight:800">'+esc(b.catName)+' · 📍 '+esc(b.zone)+'</div>'+
+    '<p>'+esc(b.desc)+'</p>'+
+    '<dl>'+(b.sells?'<dt>Qué vende</dt><dd>'+esc(b.sells)+'</dd>':"")+(b.hours?'<dt>Horario</dt><dd>'+esc(b.hours)+'</dd>':"")+(b.delivery?'<dt>Entrega</dt><dd>'+esc(b.delivery)+'</dd>':"")+'</dl>'+
     prods+
-    '<div class="btnrow"><a class="btn btn-wa" target="_blank" rel="noopener" data-sound="success" href="'+b.wa+'">💬 Escribir por WhatsApp</a>'+
-    (b.site?'<a class="btn btn-ghost" target="_blank" rel="noopener" href="'+esc(b.site)+'">Ver su tienda →</a>':"")+'</div>';
+    '<div class="btnrow"><a class="btn btn-wa" target="_blank" rel="noopener" data-sound="success" href="'+esc(safeUrl(b.wa)||"#")+'">💬 Escribir por WhatsApp</a>'+
+    (safeUrl(b.site)?'<a class="btn btn-ghost" target="_blank" rel="noopener" href="'+esc(safeUrl(b.site))+'">Ver su tienda →</a>':"")+'</div>';
   modalBack.classList.add("open"); document.body.style.overflow="hidden";
 }
 function closeModal(){ modalBack.classList.remove("open"); document.body.style.overflow=""; playSound("click"); }
@@ -1110,10 +1112,10 @@ function mapNegocio(n,prods){
   var c=catById(TIPO_CAT[n.tipo]||"tienda");
   var names=(prods||[]).map(function(p){ return p.nombre; });
   return {
-    id:"sb-"+n.id, name:esc(n.nombre), cat:c.id, catName:esc(n.tipo||c.name), zone:esc(n.zona||"Cojímar"),
+    id:"sb-"+n.id, name:(n.nombre||""), cat:c.id, catName:(n.tipo||c.name), zone:(n.zona||"Cojímar"),
     color:c.color, icon:c.icon, featured:false,
-    desc:esc(n.descripcion||("Negocio de "+(n.zona||"la zona")+" en La Vitrina del Este AFY. Escríbele por WhatsApp y pregunta por sus productos y precios.")),
-    sells:esc(names.join(", ")), hours:"Atención por WhatsApp", delivery:"",
+    desc:(n.descripcion||("Negocio de "+(n.zona||"la zona")+" en La Vitrina del Este AFY. Escríbele por WhatsApp y pregunta por sus productos y precios.")),
+    sells:names.join(", "), hours:"Atención por WhatsApp", delivery:"",
     wa:waLink(n.whatsapp,"Hola "+(n.nombre||"")+", vengo de La Vitrina del Este AFY."),
     site:safeUrl(n.tienda_url), products:prods||[],
     keywords:(names.join(" ")+" "+(n.tipo||"")).toLowerCase()
