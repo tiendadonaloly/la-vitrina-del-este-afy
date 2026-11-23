@@ -491,7 +491,7 @@ footer .credit strong{color:var(--sun)}
   <!-- PLANES -->
   <section aria-labelledby="planTitle" id="planes">
     <span class="kicker">Planes para negocios</span>
-    <div class="sec-head"><div><h2 id="planTitle">Pon tu negocio en la vitrina. <span class="hl">La primera semana es gratis.</span></h2><p>Elige cómo pagar: mes a mes, o por adelantado con descuento, y abona como te quede mejor: <strong>en efectivo o por Zelle</strong>. Todos los precios ya llevan una <strong>rebaja del 10%</strong> para que arrancar te cueste menos. Todos los planes incluyen tu tarjeta en la vitrina con tu WhatsApp directo, para que el cliente te escriba sin intermediarios.</p></div></div>
+    <div class="sec-head"><div><h2 id="planTitle">Pon tu negocio en la vitrina. <span class="hl">La primera semana es gratis.</span></h2><p>Elige cómo pagar: mes a mes, o por adelantado con descuento, y abona como te quede mejor: <strong>en efectivo o por Zelle</strong>. Comparado con El Yerro, aquí pagas menos: el plan <strong>Básico sale un 23% menos</strong> y el <strong>PRO un 31% menos</strong>. Todos los planes incluyen tu tarjeta en la vitrina con tu WhatsApp directo, para que el cliente te escriba sin intermediarios.</p></div></div>
     <div class="period-switch" id="periodSwitch" role="group" aria-label="Periodo de pago">
       <button type="button" data-period="mensual">Mensual</button>
       <button type="button" data-period="tres" class="on">3 meses</button>
@@ -920,8 +920,8 @@ document.querySelectorAll("[data-sound]").forEach(function(el){
 var PLAN_COMMON=["Perfil de negocio","Categorías","Gestión de productos","Extras personalizables","Eventos y promociones","Roles y permisos","Gestión de pedidos","Múltiples monedas","Gestión de reseñas"];
 var PLAN_ADV=["Múltiples imágenes por producto","Gestión de inventario","Costo de empaquetado de productos","Elegible a verificación","Dos vendedores gratis","Punto de venta (POS) integrado","Múltiples almacenes"];
 var PLANS=[
-  {id:"basico",name:"Básico",monthly:1350,per:1170,limit:"Productos (hasta 600)",adv:false,dark:false,desc:"Tu tarjeta en la vitrina y tus pedidos al día por WhatsApp, sin enredos técnicos."},
-  {id:"pro",name:"⚡ PRO",monthly:2250,per:1950,totalTres:5850,limit:"Productos (hasta 1,500)",adv:true,dark:true,flag:"El favorito",desc:"Más capacidad e inventario para crecer con más control de tu negocio."}
+  {id:"basico",name:"Básico",monthly:1200,per:1000,limit:"Productos (hasta 600)",adv:false,dark:false,desc:"Tu tarjeta en la vitrina y tus pedidos al día por WhatsApp, sin enredos técnicos."},
+  {id:"pro",name:"⚡ PRO",monthly:1800,per:1500,totalTres:4500,limit:"Productos (hasta 1,500)",adv:true,dark:true,flag:"El favorito",desc:"Más capacidad e inventario para crecer con más control de tu negocio."}
 ];
 var PERIODS={mensual:{months:1,label:"Mensual"},tres:{months:3,label:"3 meses"},seis:{months:6,label:"6 meses"},anual:{months:12,label:"Anual"}};
 var curPeriod="tres";
@@ -932,7 +932,7 @@ function planHTML(p){
   var total=(curPeriod==="tres" && p.totalTres) ? p.totalTres : perMonth*months;
   var save=p.monthly*months-total;
   var totalLine = months===1 ? "Pago mes a mes, sin compromiso de permanencia." :
-    "Plan de "+per.label.toLowerCase()+" para residentes en Cuba, con <strong>13% de descuento</strong>. Pagas <strong>"+fmt(total)+" CUP</strong>"+(save>0?" y ahorras <strong>"+fmt(save)+" CUP</strong>.":".");
+    "Plan de "+per.label.toLowerCase()+" para residentes en Cuba, pagando por adelantado. Pagas <strong>"+fmt(total)+" CUP</strong>"+(save>0?" y ahorras <strong>"+fmt(save)+" CUP</strong> frente a pagar mes a mes.":".");
   var items=PLAN_COMMON.concat([p.limit,"Cintillo publicitario"]).map(function(f){
     return '<li><span class="mk">✓</span><span>'+f+'</span></li>';
   }).join("");
