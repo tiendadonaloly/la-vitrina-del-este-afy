@@ -315,6 +315,24 @@ a.band-panel:active{transform:scale(.98)}
 .admin-row .a-info{min-width:200px;flex:1}
 .admin-row .a-info b{font-size:1.02rem}
 .admin-row .a-info small{display:block;color:var(--muted);font-weight:700;margin-top:2px;line-height:1.45}
+.timer-badge{display:inline-flex;align-items:center;gap:6px;font-weight:800;font-size:.82rem;padding:6px 12px;border-radius:999px;margin-top:7px;line-height:1.3}
+.timer-badge.paid{background:#DFF5E6;color:#14663A}
+.timer-badge.free{background:#FFF0BF;color:#7A5200;border:1.5px dashed #D9A400}
+.timer-badge.overdue{background:#FDE3DC;color:#B02A12}
+@media (prefers-color-scheme: dark){.timer-badge.paid{background:#123B24;color:#7BE3A8}.timer-badge.free{background:#4A3A10;color:#FFD97A;border-color:#8A6D1F}.timer-badge.overdue{background:#4A1E14;color:#FF9D8A}}
+.pay-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.pay-row select{border:2px solid var(--line);border-radius:11px;padding:8px 10px;font:inherit;font-weight:700;font-size:.88rem;background:var(--card2);color:var(--ink);min-height:40px}
+.reminder-box{margin-top:10px;background:#FDECE8;border:2px solid #F3B7A8;border-radius:14px;padding:12px}
+@media (prefers-color-scheme: dark){.reminder-box{background:#3A1B12;border-color:#7A3A28}}
+.reminder-box b{font-size:.9rem;color:#B02A12}
+@media (prefers-color-scheme: dark){.reminder-box b{color:#FF9D8A}}
+.reminder-box textarea{width:100%;margin-top:8px;border:2px solid var(--line);border-radius:10px;padding:10px;font:inherit;font-size:.88rem;font-weight:600;background:var(--card);color:var(--ink);min-height:96px;resize:vertical}
+.owner-timer{margin-top:12px;border-radius:14px;padding:12px 14px;font-weight:700;line-height:1.55}
+.owner-timer.ok{background:#DFF5E6;color:#14663A}
+.owner-timer.free{background:#FFF6D8;color:#7A5200;border:1.5px dashed #D9A400}
+.owner-timer.over{background:#FDECE8;color:#B02A12}
+@media (prefers-color-scheme: dark){.owner-timer.ok{background:#123B24;color:#7BE3A8}.owner-timer.free{background:#4A3A10;color:#FFD97A}.owner-timer.over{background:#3A1B12;color:#FF9D8A}}
+.owner-timer .btn{margin-top:10px}
 .modal .prod-list{display:grid;gap:10px;margin-top:6px}
 .modal .prod-item{display:flex;gap:11px;align-items:center}
 .modal .prod-item img{width:52px;height:52px;border-radius:11px;object-fit:cover;background:var(--bg2)}
@@ -984,6 +1002,63 @@ var MUNICIPIOS=["Habana del Este","Guanabacoa","Regla","Cotorro","San Miguel del
 var PLAN_NAMES={basico:"Básico",pro:"PRO","sin-decidir":"Sin decidir"};
 var PAY_NAMES={efectivo:"Efectivo",zelle:"Zelle","sin-decidir":"Sin decidir"};
 
+/* ----- Temporizador: semana gratis (7 días desde activated_at) y planes
+   pagados (hasta paid_until). Las fechas se calculan en hora de La Habana
+   y se muestran DD/MM/YYYY. ----- */
+var DAY_MS=86400000;
+var HAV_FMT=new Intl.DateTimeFormat("en-CA",{timeZone:"America/Havana",year:"numeric",month:"2-digit",day:"2-digit"});
+function havParts(ts){
+  var o={};
+  HAV_FMT.formatToParts(new Date(ts)).forEach(function(p){ o[p.type]=p.value; });
+  return o;
+}
+function havanaDayNum(ts){ var p=havParts(ts); return Date.UTC(+p.year,(+p.month)-1,+p.day)/DAY_MS; }
+function fmtFecha(ts){ var p=havParts(ts); return p.day+"/"+p.month+"/"+p.year; }
+function addMonths(ts,months){ var d=new Date(ts); d.setMonth(d.getMonth()+months); return d.getTime(); }
+function diasTxt(n){ return n+(n===1?" día":" días"); }
+function timerState(n){
+  if(!n||!n.activo) return {kind:"pendiente"};
+  var now=Date.now();
+  if(n.paid_until){
+    var pu=new Date(n.paid_until).getTime();
+    if(isNaN(pu)) return {kind:"none"};
+    var diff=havanaDayNum(pu)-havanaDayNum(now);
+    if(pu>now) return {kind:"paid",until:pu,days:Math.max(diff,0)};
+    return {kind:"paid-overdue",until:pu,days:Math.max(-diff,0)};
+  }
+  if(n.activated_at){
+    var at=new Date(n.activated_at).getTime();
+    if(isNaN(at)) return {kind:"none"};
+    var end=at+7*DAY_MS;
+    var d2=havanaDayNum(end)-havanaDayNum(now);
+    if(end>now) return {kind:"free",end:end,days:Math.max(d2,0)};
+    return {kind:"free-overdue",end:end,days:Math.max(-d2,0)};
+  }
+  return {kind:"none"};
+}
+function timerBadgeHTML(n){
+  var t=timerState(n);
+  if(t.kind==="paid") return '<span class="timer-badge paid">✅ Pagado hasta '+fmtFecha(t.until)+' · quedan '+diasTxt(t.days)+'</span>';
+  if(t.kind==="paid-overdue") return '<span class="timer-badge overdue">⛔ Pago vencido hace '+diasTxt(t.days)+'</span>';
+  if(t.kind==="free") return '<span class="timer-badge free">🎁 Semana gratis · quedan '+diasTxt(t.days)+'</span>';
+  if(t.kind==="free-overdue") return '<span class="timer-badge overdue">⛔ Semana gratis vencida hace '+diasTxt(t.days)+' · cobrar o desactivar</span>';
+  return "";
+}
+function reminderText(n,t){
+  var plan=PLAN_NAMES[n.plan]||n.plan||"";
+  if(t.kind==="free-overdue") return "Hola, "+(n.nombre||"")+". Te escribo de La Vitrina del Este AFY. Tu semana gratis ya se venció. Para seguir anunciado tienes que pagar el plan "+plan+". Puedes pagar en efectivo o por Zelle. Cuando pagues me avisas y te activo de nuevo. Gracias. — Armando";
+  return "Hola, "+(n.nombre||"")+". Te escribo de La Vitrina del Este AFY. Tu plan "+plan+" se venció el "+fmtFecha(t.until)+". Para seguir anunciado tienes que renovarlo. Puedes pagar en efectivo o por Zelle. Cuando pagues me avisas y te lo renuevo. Gracias. — Armando";
+}
+function ownerTimerHTML(n){
+  var t=timerState(n);
+  if(t.kind==="free") return '<div class="owner-timer free">🎁 Te quedan <strong>'+diasTxt(t.days)+'</strong> de tu semana gratis. Cuando se venza, escríbele a Armando para pagar tu plan y seguir en la vitrina.</div>';
+  if(t.kind==="paid") return '<div class="owner-timer ok">✅ Tu plan está pagado hasta el <strong>'+fmtFecha(t.until)+'</strong> · te quedan '+diasTxt(t.days)+'.</div>';
+  if(t.kind==="free-overdue"||t.kind==="paid-overdue"){
+    return '<div class="owner-timer over">⛔ Tu semana gratis / tu plan se venció. Escríbele a Armando por WhatsApp para pagar.<div><a class="btn btn-wa" target="_blank" rel="noopener" href="https://wa.me/5352783094?text='+encodeURIComponent("Hola Armando, quiero pagar mi plan de La Vitrina del Este AFY.")+'">💬 Escribirle a Armando por WhatsApp</a></div></div>';
+  }
+  return "";
+}
+
 function esc(s){ return (""+(s==null?"":s)).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
 function safeUrl(u){ u=(""+(u||"")).trim(); return /^https:\/\//i.test(u)?u:null; }
 function opts(list,sel){ return list.map(function(o){ return '<option value="'+esc(o)+'"'+(o===sel?" selected":"")+'>'+esc(o)+'</option>'; }).join(""); }
@@ -1158,6 +1233,7 @@ function renderOwnerPanel(){
     '<div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center"><h3 style="margin:0;font-size:1.25rem">'+esc(n.nombre)+'</h3>'+
     (n.activo?'<span class="status-pill on">● Activo — visible en la vitrina</span>':'<span class="status-pill off">● Pendiente de activación</span>')+'</div>'+
     (n.activo?"":'<p style="color:var(--ink2);font-weight:600;line-height:1.6">Tu negocio todavía no sale en el directorio: Armando lo activa cuando confirmes el pago de tu plan ('+(PAY_NAMES[n.forma_pago]||n.forma_pago||"") +'). Mientras tanto, deja tus productos listos aquí abajo.</p>')+
+    ownerTimerHTML(n)+
     '<form id="bizForm"><div class="reg-grid">'+
       '<div><label for="nName">Nombre del negocio</label><input id="nName" value="'+esc(n.nombre)+'"></div>'+
       '<div><label for="nTipo">Tipo de negocio</label><select id="nTipo">'+opts(TIPOS,n.tipo)+'</select></div>'+
@@ -1244,20 +1320,63 @@ function loadProducts(){
 }
 function loadAdmin(){
   var ab=document.getElementById("adminBox"); if(!ab) return;
-  ab.innerHTML='<h3 style="margin:0 0 4px;font-size:1.15rem">🛠️ Panel de Armando — todos los negocios</h3><p style="color:var(--ink2);font-weight:600;margin:0;line-height:1.55">Activa un negocio cuando confirme su pago (efectivo o Zelle); desactívalo y deja de salir en la vitrina.</p><div id="adminList"><p style="font-weight:700;color:var(--muted)">Cargando negocios…</p></div>';
+  ab.innerHTML='<h3 style="margin:0 0 4px;font-size:1.15rem">🛠️ Panel de Armando — todos los negocios</h3><p style="color:var(--ink2);font-weight:600;margin:0;line-height:1.55">Al activar un negocio empieza su semana gratis (el temporizador cuenta 7 días). Cuando pague, marca «✓ Pagó» con los meses que pagó y el temporizador cuenta su plan. Si se le vence algo, aquí mismo te queda el mensaje listo para copiar y mandárselo por WhatsApp.</p><div id="adminList"><p style="font-weight:700;color:var(--muted)">Cargando negocios…</p></div>';
   var list=document.getElementById("adminList");
   sbFetch("/rest/v1/negocios?select=*&order=activo.asc,nombre.asc").then(function(rows){
     if(!rows||!rows.length){ list.innerHTML='<p style="font-weight:700;color:var(--muted)">Todavía no hay negocios registrados.</p>'; return; }
+    var byId={};
+    rows.forEach(function(n){ byId[n.id]=n; });
     list.innerHTML=rows.map(function(n){
-      return '<div class="admin-row"><div class="a-info"><b>'+esc(n.nombre)+'</b> '+(n.activo?'<span class="status-pill on">Activo</span>':'<span class="status-pill off">Pendiente</span>')+'<small>'+esc(n.tipo||"")+' · 📍 '+esc(n.zona||"")+' ('+esc(n.municipio||"")+')<br>Plan: '+esc(PLAN_NAMES[n.plan]||n.plan||"")+' · Pago: '+esc(PAY_NAMES[n.forma_pago]||n.forma_pago||"")+' · '+esc(n.email||"")+'</small></div>'+
+      var t=timerState(n);
+      var html='<div class="admin-item" data-nid="'+n.id+'"><div class="admin-row"><div class="a-info"><b>'+esc(n.nombre)+'</b> '+(n.activo?'<span class="status-pill on">Activo</span>':'<span class="status-pill off">Pendiente</span>')+'<small>'+esc(n.tipo||"")+' · 📍 '+esc(n.zona||"")+' ('+esc(n.municipio||"")+')<br>Plan: '+esc(PLAN_NAMES[n.plan]||n.plan||"")+' · Pago: '+esc(PAY_NAMES[n.forma_pago]||n.forma_pago||"")+' · '+esc(n.email||"")+'</small>'+(n.activo?'<div>'+timerBadgeHTML(n)+'</div>':"")+'</div>'+
       '<div style="display:flex;gap:8px;flex-wrap:wrap"><a class="mini-btn teal" style="text-decoration:none;display:inline-flex;align-items:center" target="_blank" rel="noopener" href="'+waLink(n.whatsapp,"Hola "+(n.nombre||"")+", soy Armando, de La Vitrina del Este AFY.")+'">💬 WhatsApp</a>'+
       '<button type="button" class="mini-btn '+(n.activo?"red":"teal")+' a-toggle" data-id="'+n.id+'" data-on="'+(n.activo?"1":"0")+'">'+(n.activo?"Desactivar":"✓ Activar")+'</button></div></div>';
+      if(n.activo){
+        html+='<div class="pay-row"><label style="font-weight:800;font-size:.88rem" for="paySel-'+n.id+'">💵 Registrar pago:</label><select id="paySel-'+n.id+'" class="pay-sel"><option value="1">1 mes</option><option value="3" selected>3 meses</option><option value="6">6 meses</option><option value="12">12 meses</option></select><button type="button" class="mini-btn teal pay-btn" data-id="'+n.id+'">✓ Pagó</button></div>';
+      }
+      if(t.kind==="free-overdue"||t.kind==="paid-overdue"){
+        html+='<div class="reminder-box"><b>📩 Mensaje listo para enviarle por WhatsApp:</b><textarea readonly class="reminder-text">'+esc(reminderText(n,t))+'</textarea><div style="margin-top:8px"><button type="button" class="mini-btn teal copy-btn">📋 Copiar mensaje</button></div></div>';
+      }
+      html+='</div>';
+      return html;
     }).join("");
     list.querySelectorAll(".a-toggle").forEach(function(b){
       b.addEventListener("click",function(){
         var id=b.getAttribute("data-id"), on=b.getAttribute("data-on")==="1";
+        var row=byId[id]||{};
         b.disabled=true; b.textContent="…";
-        sbFetch("/rest/v1/negocios?id=eq."+id,{method:"PATCH",body:JSON.stringify({activo:!on})}).then(function(){ playSound("success"); toast(on?"Negocio desactivado":"Negocio activado ✓ Ya sale en la vitrina"); loadAdmin(); loadDirectory(); }).catch(function(e){ toast("No se pudo cambiar: "+friendlyErr(e)); loadAdmin(); });
+        var patch;
+        if(on){ patch={activo:false}; }
+        else{
+          patch={activo:true};
+          /* La semana gratis empieza solo en la primera activación:
+             si ya tiene activated_at, reactivar NO reinicia el conteo. */
+          if(!row.activated_at) patch.activated_at=new Date().toISOString();
+        }
+        sbFetch("/rest/v1/negocios?id=eq."+id,{method:"PATCH",body:JSON.stringify(patch)}).then(function(){ playSound("success"); toast(on?"Negocio desactivado":"Negocio activado ✓ Ya sale en la vitrina y corre su semana gratis"); loadAdmin(); loadDirectory(); }).catch(function(e){ toast("No se pudo cambiar: "+friendlyErr(e)); loadAdmin(); });
+      });
+    });
+    list.querySelectorAll(".pay-btn").forEach(function(b){
+      b.addEventListener("click",function(){
+        var id=b.getAttribute("data-id");
+        var item=b.closest(".admin-item");
+        var sel=item?item.querySelector(".pay-sel"):null;
+        var months=sel?parseInt(sel.value,10)||3:3;
+        b.disabled=true; b.textContent="Guardando…";
+        var until=addMonths(Date.now(),months);
+        sbFetch("/rest/v1/negocios?id=eq."+id,{method:"PATCH",body:JSON.stringify({paid_until:new Date(until).toISOString(),activo:true})}).then(function(){ playSound("success"); toast("Pago registrado ✓ Pagado hasta el "+fmtFecha(until)); loadAdmin(); loadDirectory(); }).catch(function(e){ toast("No se pudo registrar el pago: "+friendlyErr(e)); loadAdmin(); });
+      });
+    });
+    list.querySelectorAll(".copy-btn").forEach(function(b){
+      b.addEventListener("click",function(){
+        var item=b.closest(".admin-item");
+        var ta=item?item.querySelector(".reminder-text"):null;
+        if(!ta) return;
+        function done(){ playSound("success"); toast("Mensaje copiado ✓ Pégalo en su WhatsApp"); }
+        function fallback(){ ta.focus(); ta.select(); toast("Mensaje seleccionado — cópialo y pégalo en su WhatsApp"); }
+        if(navigator.clipboard&&navigator.clipboard.writeText){
+          navigator.clipboard.writeText(ta.value).then(done).catch(fallback);
+        }else{ fallback(); }
       });
     });
   }).catch(function(err){ list.innerHTML='<p style="font-weight:700;color:#C22E12">No se pudo cargar la lista: '+esc(friendlyErr(err))+'</p>'; });
